@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>View Blog</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-left">
+      <h1>My Blogging Site</h1>
+    </div>
+    <nav class="header-right" id="nav-bar">
+      <a href="/" class="btn">Home</a>
+      <a href="/add.html" class="btn">Add Blog</a>
+      <a href="/signup.html" class="btn" id="signup-btn">Signup</a>
+      <a href="/login.html" class="btn" id="login-btn">Login</a>
+      <span id="user-greet" style="display:none;">
+        Welcome, <span id="username"></span> | <a href="#" id="logout-btn">Logout</a>
+      </span>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <div id="blog-container"></div>
+
+    <section id="comments-section">
+      <h3>Comments</h3>
+      <div id="comments-container">
+        <p>Loading comments...</p>
+      </div>
+
+      <form id="add-comment-form" class="form">
+        <textarea name="comment_text" rows="3" placeholder="Write a comment..." required></textarea>
+        <button type="submit" class="btn primary">Add Comment</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- SCRIPTS -->
+  <script src="/js/view.js"></script>
+</body>
+</html>
