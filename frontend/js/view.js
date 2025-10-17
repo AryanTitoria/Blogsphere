@@ -1,113 +1,92 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // Header elements
-  const userId = localStorage.getItem('user_id');
-  const username = localStorage.getItem('username');
-  const loginBtn = document.getElementById('login-btn');
-  const signupBtn = document.getElementById('signup-btn');
-  const userGreet = document.getElementById('user-greet');
-  const usernameSpan = document.getElementById('username');
-  const logoutBtn = document.getElementById('logout-btn');
+document.addEventListener("DOMContentLoaded", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const blogId = urlParams.get("id");
+  const user = localStorage.getItem("username");
 
-  if (userId) {
-    loginBtn.style.display = 'none';
-    signupBtn.style.display = 'none';
-    userGreet.style.display = 'inline';
-    usernameSpan.textContent = username;
-  }
+  const blogContentDiv = document.getElementById("blogContent");
+  const commentsList = document.getElementById("commentsList");
+  const addCommentBtn = document.getElementById("addCommentBtn");
+  const commentText = document.getElementById("commentText");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  logoutBtn?.addEventListener('click', () => {
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('username');
-    window.location.reload();
+  logoutBtn.addEventListener("click", () => {
+    localStorage.clear();
+    window.location.href = "login.html";
   });
 
-  // BLOG & COMMENTS
-  const blogContainer = document.getElementById('blog-container');
-  const commentsContainer = document.getElementById('comments-container');
-  const commentForm = document.getElementById('add-comment-form');
+  //  Fetch blog details from backend
+  try {
+    const res = await fetch(`/blog/${blogId}`);
+    if (!res.ok) throw new Error("Failed to fetch blog details.");
+    const blog = await res.json();
 
-  const params = new URLSearchParams(window.location.search);
-  const blogId = params.get('id');
+    if (!blog || !blog.title) {
+      blogContentDiv.innerHTML = `<h2 style="color:red;">Blog not found!</h2>`;
+      return;
+    }
 
-  async function fetchBlog() {
-    blogContainer.innerHTML = '<p>Loading blog...</p>';
+    //  Show blog content beautifully
+    blogContentDiv.innerHTML = `
+      <h2 class="blog-title">${blog.title}</h2>
+      <div class="blog-meta">
+        By <b>${blog.username}</b> | ${new Date(blog.created_at).toLocaleString()}
+      </div>
+      <div class="blog-content">
+        ${blog.content.replace(/\n/g, "<br>")}
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    blogContentDiv.innerHTML = `<p style="color:red;">Error loading blog content.</p>`;
+  }
+
+  //  Fetch and display comments
+  async function loadComments() {
     try {
-      const res = await fetch(`/api/blogs/${blogId}`);
-      const data = await res.json();
-      if (!data.success) {
-        blogContainer.innerHTML = '<p>Blog not found.</p>';
-        return;
-      }
-      const blog = data.blog;
-      blogContainer.innerHTML = `
-        <h2>${blog.title}</h2>
-        <p>By: ${blog.username} | ${new Date(blog.created_at).toLocaleString()}</p>
-        <p>${blog.content}</p>
-      `;
+      const res = await fetch(`/comments/${blogId}`);
+      const comments = await res.json();
+
+      commentsList.innerHTML =
+        comments.length === 0
+          ? "<p>No comments yet. Be the first to comment!</p>"
+          : comments
+              .map(
+                (c) => `
+          <div class="comment">
+            <strong>${c.username}</strong>: ${c.comment_text}
+          </div>
+        `
+              )
+              .join("");
     } catch (err) {
-      console.error(err);
-      blogContainer.innerHTML = '<p>Error loading blog.</p>';
+      commentsList.innerHTML = `<p style="color:red;">Failed to load comments.</p>`;
     }
   }
 
-  async function fetchComments() {
-    commentsContainer.innerHTML = '<p>Loading comments...</p>';
-    try {
-      const res = await fetch(`/api/comments/${blogId}`);
-      const data = await res.json();
-      if (!data.success) {
-        commentsContainer.innerHTML = '<p>Error loading comments.</p>';
-        return;
-      }
-      if (data.comments.length === 0) {
-        commentsContainer.innerHTML = '<p>No comments yet.</p>';
-        return;
-      }
-      commentsContainer.innerHTML = '';
-      data.comments.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'comment';
-        div.innerHTML = `<p><strong>${c.username}</strong>: ${c.comment_text}</p>`;
-        commentsContainer.appendChild(div);
-      });
-    } catch (err) {
-      console.error(err);
-      commentsContainer.innerHTML = '<p>Error loading comments.</p>';
+  loadComments();
+
+  //  Add comment
+  addCommentBtn.addEventListener("click", async () => {
+    if (!user) {
+      alert("Please login to comment.");
+      window.location.href = "login.html";
+      return;
     }
-  }
 
-  // Add comment
-  if (commentForm) {
-    commentForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      if (!userId) {
-        alert('You must be logged in to comment.');
-        return;
-      }
-      const comment_text = commentForm.comment_text.value.trim();
-      if (!comment_text) return;
+    const text = commentText.value.trim();
+    if (!text) return alert("Please enter a comment.");
 
-      try {
-        const res = await fetch('/api/comments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ blog_id: blogId, user_id: userId, comment_text })
-        });
-        const data = await res.json();
-        if (data.success) {
-          commentForm.reset();
-          fetchComments();
-        } else {
-          alert('Error: ' + data.error);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Error adding comment.');
-      }
+    await fetch("/add-comment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blog_id: blogId,
+        username: user,
+        comment_text: text,
+      }),
     });
-  }
 
-  // Initialize
-  fetchBlog();
-  fetchComments();
+    commentText.value = "";
+    loadComments();
+  });
 });

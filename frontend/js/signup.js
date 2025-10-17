@@ -1,4 +1,3 @@
-// frontend/js/signup.js
 
 const form = document.getElementById('signup-form');
 

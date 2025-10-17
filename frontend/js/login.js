@@ -1,4 +1,3 @@
-// frontend/js/login.js
 
 const form = document.getElementById('login-form');
 

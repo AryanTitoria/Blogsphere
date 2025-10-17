@@ -1,46 +1,154 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>View Blog</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>View Blog - My Blogging Site</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(90deg, #2a5298, #1e3c72);
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #ffcb05;
+    }
+
+    .container {
+      width: 85%;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      padding: 30px;
+    }
+
+    .blog-title {
+      font-size: 28px;
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+
+    .blog-meta {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .blog-content {
+      font-size: 17px;
+      line-height: 1.7;
+      color: #333;
+      margin-bottom: 40px;
+    }
+
+    .comments-section {
+      margin-top: 30px;
+    }
+
+    .comments-section h3 {
+      color: #1e3c72;
+      margin-bottom: 15px;
+    }
+
+    .comment {
+      background: #f1f3f6;
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .comment strong {
+      color: #2a5298;
+    }
+
+    .add-comment {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .add-comment textarea {
+      width: 100%;
+      height: 90px;
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      resize: none;
+    }
+
+    .add-comment button {
+      width: 150px;
+      background: #1e3c72;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .add-comment button:hover {
+      background: #2a5298;
+    }
+  </style>
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="site-header">
-    <div class="header-left">
-      <h1>My Blogging Site</h1>
-    </div>
-    <nav class="header-right" id="nav-bar">
-      <a href="/" class="btn">Home</a>
-      <a href="/add.html" class="btn">Add Blog</a>
-      <a href="/signup.html" class="btn" id="signup-btn">Signup</a>
-      <a href="/login.html" class="btn" id="login-btn">Login</a>
-      <span id="user-greet" style="display:none;">
-        Welcome, <span id="username"></span> | <a href="#" id="logout-btn">Logout</a>
-      </span>
+  <header>
+    <h1>My Blogging Site</h1>
+    <nav>
+      <a href="home.html">Home</a>
+      <a href="add.html">Add Blog</a>
+      <a href="#" id="logoutBtn">Logout</a>
     </nav>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main>
-    <div id="blog-container"></div>
+  <div class="container">
+    <div id="blogContent">
+      <!-- Blog details will appear here -->
+    </div>
 
-    <section id="comments-section">
+    <div class="comments-section">
       <h3>Comments</h3>
-      <div id="comments-container">
-        <p>Loading comments...</p>
+      <div id="commentsList"></div>
+
+      <div class="add-comment">
+        <textarea id="commentText" placeholder="Write a comment..."></textarea>
+        <button id="addCommentBtn">Add Comment</button>
       </div>
+    </div>
+  </div>
 
-      <form id="add-comment-form" class="form">
-        <textarea name="comment_text" rows="3" placeholder="Write a comment..." required></textarea>
-        <button type="submit" class="btn primary">Add Comment</button>
-      </form>
-    </section>
-  </main>
-
-  <!-- SCRIPTS -->
-  <script src="/js/view.js"></script>
+  <script src="view.js"></script>
 </body>
 </html>

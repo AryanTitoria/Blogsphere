@@ -1,5 +1,3 @@
-// frontend/js/index.js
-
 async function fetchBlogs() {
   const container = document.getElementById('blogs-container');
   container.innerHTML = '<p>Loading blogs...</p>';

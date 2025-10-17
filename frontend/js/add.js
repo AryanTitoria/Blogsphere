@@ -1,5 +1,3 @@
-// frontend/js/add.js
-
 const form = document.getElementById('add-blog-form');
 
 form.addEventListener('submit', async (e) => {
@@ -7,9 +5,9 @@ form.addEventListener('submit', async (e) => {
 
   const title = form.title.value.trim();
   const content = form.content.value.trim();
-  const user_id = form.user_id.value.trim();
+  const user_id = localStorage["user_id"]
 
-  if (!title || !content || !user_id) {
+  if (!title || !content ) {
     alert('All fields are required!');
     return;
   }
@@ -18,7 +16,7 @@ form.addEventListener('submit', async (e) => {
     const res = await fetch('/api/blogs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, user_id })
+      body: JSON.stringify({ title, content ,user_id})
     });
 
     const data = await res.json();

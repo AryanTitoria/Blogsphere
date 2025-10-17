@@ -5,7 +5,7 @@ require('dotenv').config();
 const pool = require('./db');
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
 
 // Serve frontend static files
@@ -49,12 +49,12 @@ app.get('/api/blogs/:id', async (req, res) => {
 
 // 3️⃣ Create new blog
 app.post('/api/blogs', async (req, res) => {
-  const { title, content, user_id } = req.body;
-  if (!title || !content || !user_id) return res.status(400).json({ success: false, error: 'Title, content, and user_id required' });
+  const { title, content ,user_id} = req.body;
+  if (!title || !content ) return res.status(400).json({ success: false, error: 'Title, content, and user_id required' });
   try {
     const [result] = await pool.query(
       'INSERT INTO Blogs (title, content, user_id) VALUES (?, ?, ?)',
-      [title, content, user_id]
+      [title, content,user_id]
     );
     const [rows] = await pool.query('SELECT * FROM Blogs WHERE blog_id = ?', [result.insertId]);
     res.status(201).json({ success: true, blog: rows[0] });
