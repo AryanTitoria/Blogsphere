@@ -1,92 +1,83 @@
+// view.js
+
 document.addEventListener("DOMContentLoaded", async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const blogId = urlParams.get("id");
-  const user = localStorage.getItem("username");
+  const params = new URLSearchParams(window.location.search);
+  const blogId = params.get("id");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  const blogContentDiv = document.getElementById("blogContent");
-  const commentsList = document.getElementById("commentsList");
-  const addCommentBtn = document.getElementById("addCommentBtn");
-  const commentText = document.getElementById("commentText");
-  const logoutBtn = document.getElementById("logoutBtn");
+  const blogTitle = document.getElementById("blog-title");
+  const blogMeta = document.getElementById("blog-meta");
+  const blogContent = document.getElementById("blog-content");
+  const commentsList = document.getElementById("comments-list");
 
-  logoutBtn.addEventListener("click", () => {
-    localStorage.clear();
-    window.location.href = "login.html";
-  });
-
-  //  Fetch blog details from backend
+  // Fetch blog details
   try {
-    const res = await fetch(`/blog/${blogId}`);
-    if (!res.ok) throw new Error("Failed to fetch blog details.");
-    const blog = await res.json();
+    const res = await fetch(`/api/blogs/${blogId}`);
+    const data = await res.json();
 
-    if (!blog || !blog.title) {
-      blogContentDiv.innerHTML = `<h2 style="color:red;">Blog not found!</h2>`;
-      return;
+    if (data.success && data.blog) {
+      const blog = data.blog;
+      blogTitle.textContent = blog.title;
+      blogMeta.textContent = `By: ${blog.username} | ${new Date(blog.created_at).toLocaleString()}`;
+      blogContent.textContent = blog.content;
+    } else {
+      blogTitle.textContent = "Blog not found.";
     }
-
-    //  Show blog content beautifully
-    blogContentDiv.innerHTML = `
-      <h2 class="blog-title">${blog.title}</h2>
-      <div class="blog-meta">
-        By <b>${blog.username}</b> | ${new Date(blog.created_at).toLocaleString()}
-      </div>
-      <div class="blog-content">
-        ${blog.content.replace(/\n/g, "<br>")}
-      </div>
-    `;
   } catch (err) {
-    console.error(err);
-    blogContentDiv.innerHTML = `<p style="color:red;">Error loading blog content.</p>`;
+    console.error("Error fetching blog:", err);
+    blogTitle.textContent = "Error loading blog.";
   }
 
-  //  Fetch and display comments
+  // Fetch comments
   async function loadComments() {
-    try {
-      const res = await fetch(`/comments/${blogId}`);
-      const comments = await res.json();
+    commentsList.innerHTML = "";
+    const res = await fetch(`/api/comments/${blogId}`);
+    const data = await res.json();
 
-      commentsList.innerHTML =
-        comments.length === 0
-          ? "<p>No comments yet. Be the first to comment!</p>"
-          : comments
-              .map(
-                (c) => `
-          <div class="comment">
-            <strong>${c.username}</strong>: ${c.comment_text}
-          </div>
-        `
-              )
-              .join("");
-    } catch (err) {
-      commentsList.innerHTML = `<p style="color:red;">Failed to load comments.</p>`;
+    if (data.success && data.comments.length > 0) {
+      data.comments.forEach(c => {
+        const div = document.createElement("div");
+        div.classList.add("comment");
+        div.innerHTML = `<strong>${c.username}</strong>: ${c.comment_text} <br><small>${new Date(c.comment_date).toLocaleString()}</small>`;
+        commentsList.appendChild(div);
+      });
+    } else {
+      commentsList.innerHTML = "<p>No comments yet. Be the first to comment!</p>";
     }
   }
 
-  loadComments();
+  await loadComments();
 
-  //  Add comment
-  addCommentBtn.addEventListener("click", async () => {
+  // Add new comment
+  document.getElementById("add-comment").addEventListener("click", async () => {
+    const text = document.getElementById("comment-text").value.trim();
     if (!user) {
-      alert("Please login to comment.");
-      window.location.href = "login.html";
+      alert("Please log in to comment.");
+      return;
+    }
+    if (!text) {
+      alert("Comment cannot be empty.");
       return;
     }
 
-    const text = commentText.value.trim();
-    if (!text) return alert("Please enter a comment.");
-
-    await fetch("/add-comment", {
+    const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        blog_id: blogId,
-        username: user,
-        comment_text: text,
-      }),
+      body: JSON.stringify({ blog_id: blogId, user_id: user.user_id, comment_text: text })
     });
 
-    commentText.value = "";
-    loadComments();
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("comment-text").value = "";
+      loadComments();
+    } else {
+      alert("Failed to add comment.");
+    }
+  });
+
+  // Logout
+  document.getElementById("logout").addEventListener("click", () => {
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
   });
 });

@@ -1,42 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Blogging Site</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BlogSphere — Discover & Share</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --primary:#2563eb;
+      --accent:#1e40af;
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --muted:#64748b;
+      --text:#0f172a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Poppins",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    header{
+      background:var(--card);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:18px 40px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+      position:sticky;top:0;z-index:10;
+    }
+    .logo{font-size:22px;font-weight:700;color:var(--primary);cursor:pointer}
+    nav button{
+      margin-left:10px;
+      padding:8px 14px;
+      border-radius:8px;
+      border:0;
+      cursor:pointer;
+      color:#fff;
+      font-weight:600;
+      background:var(--primary);
+      transition:transform .15s,opacity .15s;
+    }
+    nav button:hover{transform:translateY(-2px);opacity:.95}
+    .intro{max-width:1000px;margin:36px auto 8px;text-align:center;color:var(--muted);padding:0 20px}
+    h2.section{ text-align:center;color:var(--accent); margin:18px 0 6px; font-size:24px }
+    .container{max-width:1200px;margin:0 auto;padding:0 20px 60px}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:26px;
+      align-items:start;
+    }
+    .card{
+      background:var(--card);
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 6px 16px rgba(2,6,23,0.06);
+      display:flex;flex-direction:column;
+      transition:transform .18s,box-shadow .18s;
+      cursor:default;
+    }
+    .card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(2,6,23,0.09)}
+    /* IMAGE REMOVED: no top image element to avoid broken area */
+    .card .body{padding:18px 18px 14px;flex:1}
+    .card h3{margin:0 0 8px;color:var(--primary);font-size:18px}
+    .card p.excerpt{margin:0 0 10px;color:#334155;line-height:1.5;font-size:14px}
+    .card .meta{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 16px;border-top:1px solid #eef2f7;background:#fbfdff;font-size:13px;color:var(--muted)
+    }
+    .comment-btn{
+      background:var(--primary);
+      color:#fff;border:0;padding:7px 12px;border-radius:8px;font-weight:600;cursor:pointer;
+    }
+    .comment-btn:hover{background:var(--accent)}
+    footer{padding:22px;text-align:center;color:var(--muted);background:var(--card);border-top:1px solid #eef2f7;margin-top:30px}
+    @media (max-width:520px){
+      header{padding:14px 18px}
+      .intro{margin-top:20px;padding:0 14px}
+    }
+  </style>
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="header">
-    <div class="container header-content">
-      <h1 class="logo">📝 My Blogging Site</h1>
-      <nav class="nav">
-        <a href="/" class="nav-link">Home</a>
-        <a href="/add.html" class="nav-link">Add Blog</a>
-        <a href="/signup.html" class="nav-link" id="signup-btn">Signup</a>
-        <a href="/login.html" class="nav-link" id="login-btn">Login</a>
-        <span id="user-greet" class="user-info" style="display:none;">
-          Welcome, <span id="username"></span> |
-          <a href="#" id="logout-btn">Logout</a>
-        </span>
-      </nav>
-    </div>
+  <header>
+    <div class="logo" onclick="location.href='index.html'">BlogSphere</div>
+    <nav>
+      <button onclick="location.href='add.html'">Add Blog</button>
+      <button onclick="location.href='login.html'">Login</button>
+      <button onclick="location.href='signup.html'">Signup</button>
+    </nav>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="main container">
-    <section class="intro">
-      <h2>Welcome to My Blogging Platform</h2>
-      <p>Share your thoughts, ideas, and creativity with the world 🌍</p>
-      <button onclick="window.location.href='/add.html'" class="btn primary">
-        ✍️ Write a Blog
-      </button>
-    </section>
+  <p class="intro">Join <strong>BlogSphere</strong> — your space to share stories, thoughts and ideas with the world.</p>
+  <h2 class="section">Latest Blogs</h2>
 
-    <section id="blogs-container" class="blogs-grid"></section>
-  </main>
+  <div class="container">
+    <div id="grid" class="grid">
+      <!-- cards inserted here -->
+    </div>
+  </div>
 
-  <script src="/js/index.js"></script>
+  <footer>© 2025 BlogSphere · Created with 💙 by Aryan Titoria</footer>
+
+  <script>
+    // Loads posts from your backend: GET /api/posts
+    async function loadPosts(){
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted)">Loading posts…</p>';
+
+      try {
+        const res = await fetch('/api/posts');
+        const data = await res.json();
+
+        if(!data || !data.success || !Array.isArray(data.posts)){
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#ef4444">No posts or invalid response from server.</p>';
+          return;
+        }
+
+        const posts = data.posts;
+        if(posts.length === 0){
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted)">No blogs found — be the first to write one!</p>';
+          return;
+        }
+
+        // Clear and render cards
+        grid.innerHTML = '';
+        posts.slice().reverse().forEach(post => {
+          const id = post.id ?? post.post_id ?? post._id ?? post.blog_id ?? post.blogId;
+          const title = post.title ?? 'Untitled';
+          const content = post.content ?? '';
+          const username = post.username ?? post.user_id ?? 'Anonymous';
+          const created = post.created_at ?? post.createdAt ?? post.date ?? '';
+          // NO image used; we removed the top image to avoid broken area
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="body">
+              <h3>${escapeHtml(title)}</h3>
+              <p class="excerpt">${escapeHtml(content).substring(0, 220)}${content.length>220?'…':''}</p>
+            </div>
+            <div class="meta">
+              <small>By ${escapeHtml(username)} · ${created ? formatDate(created) : ''}</small>
+              <button class="comment-btn" onclick="openComments('${id}')">💬 Comments</button>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error('loadPosts error', err);
+        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#ef4444">Error loading blogs. Check server console.</p>';
+      }
+    }
+
+    // open comment page for a post (uses query param 'post_id')
+    function openComments(postId){
+      location.href = `comment.html?post_id=${encodeURIComponent(postId)}`;
+    }
+
+    function formatDate(d){
+      if(!d) return '';
+      if(typeof d === 'string' && d.includes(':')) return d;
+      const date = new Date(d);
+      if(isNaN(date)) return d;
+      return date.toLocaleString();
+    }
+
+    function escapeHtml(str){
+      if(!str) return '';
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
+    }
+
+    loadPosts();
+  </script>
 </body>
 </html>

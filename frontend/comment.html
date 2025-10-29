@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Comments - BlogSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --primary:#2563eb; --muted:#64748b; --bg:#f8fafc; --card:#fff; --text:#0f172a;
+    }
+    body{margin:0;font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text)}
+    header{background:var(--card);display:flex;justify-content:space-between;align-items:center;padding:14px 40px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .logo{font-weight:700;color:var(--primary);cursor:pointer}
+    .container{max-width:900px;margin:28px auto;padding:0 20px 60px}
+    .post-card{background:var(--card);padding:22px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.06);margin-bottom:18px}
+    .post-card h2{margin:0 0 10px;color:var(--primary)}
+    .post-card p{margin:0 0 12px;color:#334155;line-height:1.6}
+    .meta{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .comments-box{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+    .comment{border-bottom:1px solid #eef2f7;padding:12px 0}
+    .comment:last-child{border-bottom:0}
+    .comment .who{font-weight:600;color:#1e3a8a}
+    .comment .when{font-size:13px;color:var(--muted);margin-left:8px}
+    form.add-comment{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    input[type="text"], textarea{padding:10px;border-radius:8px;border:1px solid #e6eefc;font-size:14px;resize:vertical}
+    textarea{min-height:90px}
+    .btn{
+      background:var(--primary);color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;width:max-content
+    }
+    .small-muted{color:var(--muted);font-size:13px}
+    .back{margin-bottom:12px;display:inline-block;color:var(--primary);cursor:pointer;text-decoration:underline}
+    @media(max-width:520px){header{padding:12px 16px}.container{padding:0 14px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo" onclick="location.href='index.html'">BlogSphere</div>
+    <div></div>
+  </header>
+
+  <div class="container">
+    <a class="back" onclick="location.href='index.html'">← Back to Home</a>
+
+    <div id="post" class="post-card">
+      <div class="meta small-muted" id="postMeta">Loading post...</div>
+      <h2 id="postTitle"></h2>
+      <p id="postContent"></p>
+    </div>
+
+    <div class="comments-box">
+      <h3 style="margin-top:0">Comments</h3>
+      <div id="commentsList">
+        <p class="small-muted">Loading comments…</p>
+      </div>
+
+      <form id="commentForm" class="add-comment">
+        <input id="username" type="text" placeholder="Your name (or nickname)" required />
+        <textarea id="commentText" placeholder="Write a comment..." required></textarea>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button type="submit" class="btn">Add Comment</button>
+          <span id="formMsg" class="small-muted"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Read post_id from querystring
+    function getQueryParam(name){
+      const url = new URL(location.href);
+      return url.searchParams.get(name);
+    }
+    const postId = getQueryParam('post_id') || getQueryParam('id') || getQueryParam('blog_id');
+
+    const postTitleEl = document.getElementById('postTitle');
+    const postContentEl = document.getElementById('postContent');
+    const postMetaEl = document.getElementById('postMeta');
+    const commentsList = document.getElementById('commentsList');
+    const commentForm = document.getElementById('commentForm');
+    const usernameInput = document.getElementById('username');
+    const commentText = document.getElementById('commentText');
+    const formMsg = document.getElementById('formMsg');
+
+    if(!postId){
+      postTitleEl.textContent = 'Post not found';
+      postContentEl.textContent = '';
+      postMetaEl.textContent = '';
+      commentsList.innerHTML = '<p class="small-muted">Missing post id in URL.</p>';
+    } else {
+      loadPost();
+      loadComments();
+    }
+
+    async function loadPost(){
+      try {
+        const res = await fetch(`/api/posts/${encodeURIComponent(postId)}`);
+        const data = await res.json();
+        if(!data || !data.success || !data.post){
+          postTitleEl.textContent = 'Unable to load post';
+          postContentEl.textContent = '';
+          postMetaEl.textContent = '';
+          return;
+        }
+        const p = data.post;
+        postTitleEl.textContent = p.title || 'Untitled';
+        postContentEl.textContent = p.content || '';
+        postMetaEl.textContent = `By ${p.username || 'Anonymous'} · ${formatDate(p.created_at ?? p.createdAt ?? '')}`;
+      } catch (err) {
+        console.error('loadPost err', err);
+        postTitleEl.textContent = 'Error loading post';
+        postContentEl.textContent = '';
+        postMetaEl.textContent = '';
+      }
+    }
+
+    async function loadComments(){
+      commentsList.innerHTML = '<p class="small-muted">Loading comments…</p>';
+      try {
+        const res = await fetch(`/api/comments/${encodeURIComponent(postId)}`);
+        const data = await res.json();
+        if(!data || !data.success || !Array.isArray(data.comments)){
+          commentsList.innerHTML = '<p class="small-muted">No comments or server returned invalid data.</p>';
+          return;
+        }
+        const comments = data.comments;
+        if(comments.length === 0){
+          commentsList.innerHTML = '<p class="small-muted">No comments yet. Be the first to comment!</p>';
+          return;
+        }
+        commentsList.innerHTML = '';
+        comments.forEach(c => {
+          const el = document.createElement('div');
+          el.className = 'comment';
+          const user = escapeHtml(c.username ?? c.user_id ?? 'Anonymous');
+          const text = escapeHtml(c.comment ?? c.comment_text ?? c.commentText ?? '');
+          const when = c.created_at ?? c.comment_date ?? c.createdAt ?? '';
+          el.innerHTML = `<div><span class="who">${user}</span><span class="when">${when ? ' · ' + formatDate(when) : ''}</span></div>
+                          <div style="margin-top:6px">${text}</div>`;
+          commentsList.appendChild(el);
+        });
+      } catch (err) {
+        console.error('loadComments err', err);
+        commentsList.innerHTML = '<p class="small-muted">Error loading comments.</p>';
+      }
+    }
+
+    commentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formMsg.textContent = '';
+      const username = usernameInput.value.trim();
+      const comment = commentText.value.trim();
+      if(!username || !comment){
+        formMsg.textContent = 'Please provide name and comment.';
+        return;
+      }
+      commentForm.querySelector('button').disabled = true;
+      formMsg.textContent = 'Posting…';
+
+      try {
+        const res = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post_id: postId, username, comment })
+        });
+        const data = await res.json();
+        if(!data || !data.success){
+          formMsg.textContent = (data && data.error) ? data.error : 'Error posting comment.';
+          commentForm.querySelector('button').disabled = false;
+          return;
+        }
+        // Clear form and refresh comments (or append)
+        usernameInput.value = '';
+        commentText.value = '';
+        formMsg.textContent = 'Comment added!';
+        commentForm.querySelector('button').disabled = false;
+        // append new comment (data.comment expected)
+        if(data.comment){
+          prependComment(data.comment);
+        } else {
+          // reload if server doesn't return created comment object
+          loadComments();
+        }
+        setTimeout(()=>{ formMsg.textContent = ''; }, 2500);
+      } catch (err) {
+        console.error('post comment err', err);
+        formMsg.textContent = 'Network error while posting.';
+        commentForm.querySelector('button').disabled = false;
+      }
+    });
+
+    function prependComment(c){
+      // shape may vary; normalize fields
+      const user = escapeHtml(c.username ?? c.user_id ?? 'Anonymous');
+      const text = escapeHtml(c.comment ?? c.comment_text ?? '');
+      const when = c.created_at ?? c.comment_date ?? c.createdAt ?? '';
+      const el = document.createElement('div');
+      el.className = 'comment';
+      el.innerHTML = `<div><span class="who">${user}</span><span class="when">${when ? ' · ' + formatDate(when) : ''}</span></div>
+                      <div style="margin-top:6px">${text}</div>`;
+      commentsList.insertBefore(el, commentsList.firstChild);
+    }
+
+    function formatDate(d){
+      if(!d) return '';
+      if(typeof d === 'string' && d.includes(':')) return d;
+      const date = new Date(d);
+      if(isNaN(date)) return d;
+      return date.toLocaleString();
+    }
+    function escapeHtml(str){
+      if(!str) return '';
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
+    }
+  </script>
+</body>
+</html>

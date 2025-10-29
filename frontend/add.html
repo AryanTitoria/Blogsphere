@@ -1,40 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Blog</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8">
+  <title>Add Blog - Blogging Site</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container header-content">
-      <h1 class="logo">📝 My Blogging Site</h1>
-      <nav class="nav">
-        <a href="/" class="nav-link">Home</a>
-        <a href="/add.html" class="nav-link active">Add Blog</a>
-        <a href="/signup.html" class="nav-link" id="signup-btn">Signup</a>
-        <a href="/login.html" class="nav-link" id="login-btn">Login</a>
-        <span id="user-greet" class="user-info" style="display:none;">
-          Welcome, <span id="username"></span> |
-          <a href="#" id="logout-btn">Logout</a>
-        </span>
-      </nav>
+  <nav>
+    <h2>Add Blog</h2>
+    <div>
+      <button onclick="window.location.href='index.html'">Home</button>
     </div>
-  </header>
+  </nav>
 
-  <main class="main container">
-    <div class="form-card">
-      <h2>✍️ Write a New Blog</h2>
-      <form id="add-blog-form">
-        <input type="text" id="title" placeholder="Enter Blog Title" required />
-        <textarea id="content" rows="6" placeholder="Write your blog content..." required></textarea>
-        <button type="submit" class="btn primary">Publish Blog</button>
-      </form>
-    </div>
+  <main>
+    <form id="blogForm">
+      <input type="text" id="title" placeholder="Title" required><br>
+      <textarea id="content" placeholder="Content" required></textarea><br>
+      <input type="text" id="category" placeholder="Category (optional)"><br>
+      <input type="text" id="image_url" placeholder="Image URL (optional)"><br>
+      <button type="submit">Post</button>
+    </form>
   </main>
 
+  <script>
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+      alert('Please log in before adding a blog.');
+      window.location.href = 'login.html';
+    }
 
-  <script src="/js/add.js"></script>
+    document.getElementById('blogForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const blogData = {
+        title: document.getElementById('title').value.trim(),
+        content: document.getElementById('content').value.trim(),
+        category: document.getElementById('category').value.trim(),
+        image_url: document.getElementById('image_url').value.trim(),
+        user_id: user.id
+      };
+
+      try {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(blogData)
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert('Blog posted successfully!');
+          window.location.href = 'index.html';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server error while posting blog.');
+      }
+    });
+  </script>
 </body>
 </html>
